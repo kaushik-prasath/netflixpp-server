@@ -13,7 +13,7 @@ const io = socketio(server, { path:"/", cookie: false });
 /*
 * CUSTOM IMPORTS
 */
-require('dotenv').config()
+// require('dotenv').config()
 // const { mongoose } = require("./db/mongoose");
 
 const { generateMessage } = require('./utils');
