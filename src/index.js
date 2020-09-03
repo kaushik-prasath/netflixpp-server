@@ -107,6 +107,13 @@ io.on('connection', async (socket)=>{
             socket.to(room).emit('paused', `Video paused by ${name}`);
     })
 
+
+    socket.on('play', async ({name, room}) => {
+        // const user = await getUser(name);
+
+            socket.to(room).emit('played', `Video Played by ${name}`);
+    })
+
  
 });
 
