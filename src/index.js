@@ -30,7 +30,9 @@ const publicDirectoryPath = path.join(__dirname, '../public');
 app.use(express.json());
 app.use(express.static(publicDirectoryPath));
 
-
+app.get('/', (req,res)=>{
+    res.send('Netflix Party plus server')
+})
 
 
 /*
