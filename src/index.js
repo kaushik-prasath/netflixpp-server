@@ -14,7 +14,7 @@ const io = socketio(server, { path:"/", cookie: false });
 * CUSTOM IMPORTS
 */
 require('dotenv').config()
-const { mongoose } = require("./db/mongoose");
+// const { mongoose } = require("./db/mongoose");
 
 const { generateMessage } = require('./utils');
 const {addUser, removeUser,getUser, getUsersInRoom, getRoomMessages} = require('./utils/users');
