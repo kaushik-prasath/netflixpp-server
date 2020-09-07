@@ -57,11 +57,15 @@ io.on('connection', async (socket)=>{
         let clientIds = Object.keys( io.of('/').connected );
         console.log('clientid', clientIds);
 
+       if(clientIds.length > 1){
         io.sockets.in(clientIds[0]).emit('getCurrentPlaybackTime');
 
         socket.on('sendCurrentPlaybackPosition', (pp) =>{
             socket.broadcast.to(room).emit('playbackposition', pp);
-        })
+        });
+       }
+
+       
 
         // socket.emit('message', await generateMessage('Admin', `Welcome!`, {
         //     type: 'event', 
