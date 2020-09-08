@@ -1,9 +1,6 @@
 const users = []
 
 const addUser = ({ id, name, room }) => {
-    // Clean the data
-    name = name.trim().toLowerCase()
-    room = room.trim().toLowerCase()
 
     // Validate the data
     if (!name || !room) {
@@ -20,7 +17,7 @@ const addUser = ({ id, name, room }) => {
     // Validate name
     if (existingUser) {
         return {
-            error: 'name is in use!'
+            error: 'Name is in use!'
         }
     }
 
@@ -43,7 +40,6 @@ const getUser = (id) => {
 }
 
 const getUsersInRoom = (room) => {
-    room = room.trim().toLowerCase()
     return users.filter((user) => user.room === room)
 }
 

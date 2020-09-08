@@ -1,4 +1,4 @@
-const generateMessage = async (name,text) => {
+const generateMessage = (name,text) => {
         return {
             name,
             text,

@@ -17,7 +17,7 @@ const io = socketio(server, { path:"/", cookie: false });
 // const { mongoose } = require("./db/mongoose");
 
 const { generateMessage } = require('./utils/old');
-const {addUser, removeUser,getUser, getUsersInRoom, getRoomMessages} = require('./utils/users');
+const {addUser, removeUser,getUser, getUsersInRoom, getRoomMessages} = require('./utils/temp');
 
 
 
@@ -40,19 +40,19 @@ app.get('/', (req,res)=>{
 */
 io.on('connection', async (socket)=>{
 
-    socket.on('join', async ({name, room}, callback) =>{
-        // const {error, user} = await addUser({
-        //     id: socket.id,
-        //     name,
-        //     room
-        // });
+    socket.on('join', async ({name, room}, callback) => {
+        const {error, user} = addUser({
+            id: socket.id,
+            name,
+            room
+        });
 
-        // if(error){
-        //     return callback(error);
-        // }
+        if(error){
+            return callback(error);
+        }
 
-        // socket.join(user.room);
-        socket.join(room);
+        socket.join(user.room);
+        // socket.join(room);
 
        
         let clientIds = Object.keys( io.of('/').connected );
@@ -68,7 +68,8 @@ io.on('connection', async (socket)=>{
             let clientIds = Object.keys( io.of('/').connected );
 
             if(socket.id === clientIds[0]){
-                socket.emit('message', generateMessage('Admin', 'Moved the video'));
+                const user = getUser(socket.id);
+                socket.emit('message', generateMessage(`${user.name} - Admin`, 'Moved the video'));
             }
             io.sockets.in(clientIds[0]).emit('getCurrentPlaybackTime');
     
@@ -79,11 +80,29 @@ io.on('connection', async (socket)=>{
     
        
 
-        // socket.emit('message', await generateMessage('Admin', `Welcome!`, {
-        //     type: 'event', 
-        //     roomId: user.room,
-        //     socketId: socket.id
-        // }));
+        socket.emit('message', generateMessage('Admin', `Welcome ${name}!`));
+
+        socket.on('sendMessage', ({body, name}, callback) => {
+            const user = getUser(socket.id);
+            io.to(user.room).emit('message', generateMessage(user.name, body));
+            callback();
+        });
+
+
+        socket.on('pause', async ({name, room}) => {
+                const user = await getUser(socket.id);
+    
+                socket.to(room).emit('paused');
+                io.to(user.room).emit('message', generateMessage(user.name, 'Paused the video'));
+        })
+    
+    
+        socket.on('play', async ({name, room}) => {
+                const user = await getUser(socket.id);;
+                socket.to(room).emit('played');
+
+                io.to(user.room).emit('message', generateMessage(user.name, 'Played the video'));
+        })
 
         // socket.broadcast.to(user.room).emit('message', await generateMessage('Admin', `${user.name} has joined!`,{
         //     type: 'event', 
@@ -96,15 +115,7 @@ io.on('connection', async (socket)=>{
 
     
 
-    // socket.on('sendMessage', async ({body, name}, callback) => {
-    //     const user = await getUser(name);
-    //     io.to(user.roomId).emit('message', await generateMessage(user.name, body, {
-    //         type: 'message', 
-    //         roomId: user.roomId,
-    //         socketId: socket.id
-    //     }));
-    //     callback();
-    // });
+    
 
     // socket.on('getRoomMessages', async ({roomId}, callback) => {
     //     const messages = await getRoomMessages(roomId);
@@ -126,18 +137,7 @@ io.on('connection', async (socket)=>{
     //     }
     // });
 
-    socket.on('pause', async ({name, room}) => {
-        // const user = await getUser(name);
-
-            socket.to(room).emit('paused', `Video paused by ${name}`);
-    })
-
-
-    socket.on('play', async ({name, room}) => {
-        // const user = await getUser(name);
-
-            socket.to(room).emit('played', `Video Played by ${name}`);
-    })
+   
 
  
 });
