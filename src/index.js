@@ -62,6 +62,18 @@ io.on('connection', async (socket)=>{
         socket.on('sendCurrentPlaybackPosition', (pp) =>{
             socket.broadcast.to(room).emit('playbackposition', pp);
         });
+
+
+        socket.on('scrubber-move', function(){
+            let clientIds = Object.keys( io.of('/').connected );
+    
+            io.sockets.in(clientIds[0]).emit('getCurrentPlaybackTime');
+    
+            socket.on('sendCurrentPlaybackPosition', (pp) =>{
+                socket.broadcast.to(room).emit('playbackposition', pp);
+            });
+        });
+    
        
 
         // socket.emit('message', await generateMessage('Admin', `Welcome!`, {
@@ -79,16 +91,7 @@ io.on('connection', async (socket)=>{
         callback();
     });
 
-    socket.on('scrubber-move', function(){
-        let clientIds = Object.keys( io.of('/').connected );
-
-        io.sockets.in(clientIds[0]).emit('getCurrentPlaybackTime');
-
-        socket.on('sendCurrentPlaybackPosition', (pp) =>{
-            socket.broadcast.to(room).emit('playbackposition', pp);
-        });
-    });
-
+    
 
     // socket.on('sendMessage', async ({body, name}, callback) => {
     //     const user = await getUser(name);
