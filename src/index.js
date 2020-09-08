@@ -69,7 +69,7 @@ io.on('connection', async (socket)=>{
 
             if(socket.id === clientIds[0]){
                 const user = getUser(socket.id);
-                io.emit('message', generateMessage(`${user.name} - Admin`, `Jumped to ${currentPositionText}`));
+                io.emit('message', generateMessage(`${user.name}(Admin)`, `Jumped to ${currentPositionText}`));
             }
             io.sockets.in(clientIds[0]).emit('getCurrentPlaybackTime');
     
@@ -80,7 +80,7 @@ io.on('connection', async (socket)=>{
     
        
 
-        socket.emit('message', generateMessage('Admin', `Welcome ${name}!`));
+        socket.emit('message', generateMessage('', `Welcome ${name}!`));
 
         socket.on('sendMessage', ({body, name}, callback) => {
             const user = getUser(socket.id);
@@ -104,11 +104,7 @@ io.on('connection', async (socket)=>{
                 io.to(user.room).emit('message', generateMessage(user.name, 'Played the video'));
         })
 
-        // socket.broadcast.to(user.room).emit('message', await generateMessage('Admin', `${user.name} has joined!`,{
-        //     type: 'event', 
-        //     roomId: user.room,
-        //     socketId: socket.id
-        // }));
+        socket.broadcast.to(user.room).emit('message', await generateMessage('', `${user.name} has joined!`));
 
         callback();
     });
