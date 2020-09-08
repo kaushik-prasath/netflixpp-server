@@ -16,7 +16,7 @@ const io = socketio(server, { path:"/", cookie: false });
 // require('dotenv').config()
 // const { mongoose } = require("./db/mongoose");
 
-const { generateMessage } = require('./utils');
+const { generateMessage } = require('./utils/old');
 const {addUser, removeUser,getUser, getUsersInRoom, getRoomMessages} = require('./utils/users');
 
 
@@ -66,7 +66,10 @@ io.on('connection', async (socket)=>{
 
         socket.on('scrubber-move', function(){
             let clientIds = Object.keys( io.of('/').connected );
-    
+
+            if(socket.id === clientIds[0]){
+                socket.emit('message', generateMessage('Admin', 'Moved the video'));
+            }
             io.sockets.in(clientIds[0]).emit('getCurrentPlaybackTime');
     
             socket.on('sendCurrentPlaybackPosition', (pp) =>{
