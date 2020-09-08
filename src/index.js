@@ -64,12 +64,12 @@ io.on('connection', async (socket)=>{
         });
 
 
-        socket.on('scrubber-move', function(){
+        socket.on('scrubber-move', function(currentPositionText){
             let clientIds = Object.keys( io.of('/').connected );
 
             if(socket.id === clientIds[0]){
                 const user = getUser(socket.id);
-                socket.emit('message', generateMessage(`${user.name} - Admin`, 'Moved the video'));
+                io.emit('message', generateMessage(`${user.name} - Admin`, `Jumped to ${currentPositionText}`));
             }
             io.sockets.in(clientIds[0]).emit('getCurrentPlaybackTime');
     
