@@ -39,17 +39,6 @@ app.get('/', (req,res)=>{
 * SOCKET LOGIC
 */
 io.on('connection', async (socket)=>{
-    
-    const getAdminPlayback = (socket, room) => {
-        let clientIds = Object.keys( io.of('/').connected );
-        console.log('clientid', clientIds);
-
-        io.sockets.in(clientIds[0]).emit('getCurrentPlaybackTime');
-
-        socket.on('sendCurrentPlaybackPosition', (pp) =>{
-            socket.broadcast.to(room).emit('playbackposition', pp);
-        });
-    }
 
     socket.on('join', async ({name, room}, callback) =>{
         // const {error, user} = await addUser({
@@ -66,7 +55,13 @@ io.on('connection', async (socket)=>{
         socket.join(room);
 
        
-        getAdminPlayback(socket, room);
+        let clientIds = Object.keys( io.of('/').connected );
+
+        io.sockets.in(clientIds[0]).emit('getCurrentPlaybackTime');
+
+        socket.on('sendCurrentPlaybackPosition', (pp) =>{
+            socket.broadcast.to(room).emit('playbackposition', pp);
+        });
        
 
         // socket.emit('message', await generateMessage('Admin', `Welcome!`, {
@@ -85,7 +80,13 @@ io.on('connection', async (socket)=>{
     });
 
     socket.on('scrubber-move', function(){
-        getAdminPlayback(socket);
+        let clientIds = Object.keys( io.of('/').connected );
+
+        io.sockets.in(clientIds[0]).emit('getCurrentPlaybackTime');
+
+        socket.on('sendCurrentPlaybackPosition', (pp) =>{
+            socket.broadcast.to(room).emit('playbackposition', pp);
+        });
     });
 
 
