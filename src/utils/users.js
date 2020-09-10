@@ -2,11 +2,11 @@ const User = require('../models/user.model');
 const Room = require('../models/room.model');
 
 
-const addUser = async ({ id, name, room }) => {
+const addUser = async (args) => {
    return new Promise(async (resolve, reject) => {
         // Clean the data
-    name = name.trim().toLowerCase()
-    room = room.trim().toLowerCase()
+
+        let { id, name, room, admin } = args;
 
         // Validate the data
         if (!name || !room) {
@@ -17,23 +17,38 @@ const addUser = async ({ id, name, room }) => {
 
         try{
 
+            let dbUser = await User.findOne({
+                name,
+                room
+            });
+
+            if(dbUser){
+                resolve({
+                    user:dbUser
+                });
+            }
+
+
             let newUser = new User({
                 socketId: id,
-                roomId: room, 
-                name
+                room, 
+                name,
+                admin
             });
     
            let savedUser = await newUser.save();
 
            let newRoom = new Room({
-            roomId: room
+            room,
+            active: true
            });
+
            newRoom.users.push(savedUser._id);
            await newRoom.save();
+
     
-           const user = { id, name, room }
             resolve({
-                user
+                user:savedUser
             })
         }catch(e){
             console.log(e);
@@ -52,7 +67,6 @@ const removeUser = async (id) => {
 
 const getUser = async (name) => {
     return new Promise( async (resolve, reject) => {
-        name = name.trim().toLowerCase();
         let user = await User.findOne({name});
         resolve(user);
     });

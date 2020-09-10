@@ -13,11 +13,11 @@ const io = socketio(server, { path:"/", cookie: false });
 /*
 * CUSTOM IMPORTS
 */
-// require('dotenv').config()
-// const { mongoose } = require("./db/mongoose");
+require('dotenv').config()
+const { mongoose } = require("./db/mongoose");
 
 const { generateMessage } = require('./utils/old');
-const {addUser, removeUser,getUser, getUsersInRoom, getRoomMessages} = require('./utils/temp');
+const {addUser, removeUser,getUser, getUsersInRoom, getRoomMessages} = require('./utils/users');
 
 
 
@@ -40,11 +40,12 @@ app.get('/', (req,res)=>{
 */
 io.on('connection', async (socket)=>{
 
-    socket.on('join', async ({name, room}, callback) => {
-        const {error, user} = addUser({
+    socket.on('join', async ({name, room, admin}, callback) => {
+        const {error, user} = await addUser({
             id: socket.id,
             name,
-            room
+            room,
+            admin
         });
 
         if(error){
@@ -54,27 +55,31 @@ io.on('connection', async (socket)=>{
         socket.join(user.room);
         // socket.join(room);
 
-       
+       if(user.admin){
         let clientIds = Object.keys( io.of('/').connected );
+        console.log('clientIds', clientIds);
+        clientIds[0] = user.socketId;
+        clientIds.pop();
+        io.sockets.in(clientIds[0]).emit('getCurrentPlaybackTime'); 
+       }
+        
 
-        io.sockets.in(clientIds[0]).emit('getCurrentPlaybackTime');
-
-        socket.on('sendCurrentPlaybackPosition', (pp) =>{
-            socket.broadcast.to(room).emit('playbackposition', pp);
+        socket.on('sendCurrentPlaybackPosition', (playbackPosition) =>{
+            socket.broadcast.to(user.room).emit('playbackposition', playbackPosition);
         });
 
 
-        socket.on('scrubber-move', function(currentPositionText){
+        socket.on('scrubber-move', async (currentPositionText) => {
             let clientIds = Object.keys( io.of('/').connected );
 
             if(socket.id === clientIds[0]){
-                const user = getUser(socket.id);
+                const user = await getUser(name);
                 io.emit('message', generateMessage(`${user.name}(Admin)`, `Jumped to ${currentPositionText}`));
             }
             io.sockets.in(clientIds[0]).emit('getCurrentPlaybackTime');
     
-            socket.on('sendCurrentPlaybackPosition', (pp) =>{
-                socket.broadcast.to(room).emit('playbackposition', pp);
+            socket.on('sendCurrentPlaybackPosition', (playbackPosition) =>{
+                socket.broadcast.to(user.room).emit('playbackposition', playbackPosition);
             });
         });
     
@@ -82,29 +87,41 @@ io.on('connection', async (socket)=>{
 
         socket.emit('message', generateMessage('', `Welcome ${name}!`));
 
-        socket.on('sendMessage', ({body, name}, callback) => {
-            const user = getUser(socket.id);
+        socket.on('sendMessage', async ({body, name}, callback) => {
+            const user = await getUser(name);
             io.to(user.room).emit('message', generateMessage(user.name, body));
             callback();
         });
 
 
         socket.on('pause', async ({name, room}) => {
-                const user = await getUser(socket.id);
+                const user = await getUser(name);
     
-                socket.to(room).emit('paused');
+                socket.to(user.room).emit('paused');
                 io.to(user.room).emit('message', generateMessage(user.name, 'Paused the video'));
         })
     
     
         socket.on('play', async ({name, room}) => {
-                const user = await getUser(socket.id);;
-                socket.to(room).emit('played');
+                const user = await getUser(name);
+                socket.to(user.room).emit('played');
 
                 io.to(user.room).emit('message', generateMessage(user.name, 'Played the video'));
         })
 
         socket.broadcast.to(user.room).emit('message', await generateMessage('', `${user.name} has joined!`));
+
+
+        socket.on('disconnect', async () => {
+            const user = await getUser(socket.id);
+    
+            socket.emit('user-disconnected');
+    
+            if(user){
+                io.to(user.room).emit('message', generateMessage('',`${user.name} has left!`));
+            }
+        });
+    
 
         callback();
     });
@@ -117,23 +134,6 @@ io.on('connection', async (socket)=>{
     //     const messages = await getRoomMessages(roomId);
     //     callback(messages);
     // });
-
-
-    // socket.on('disconnect', async () => {
-    //     const user = await getUser(socket.id);
-
-    //     socket.emit('user-disconnected');
-
-    //     if(user){
-    //         io.to(user.roomId).emit('message', await generateMessage('Admin',`${user.name} has left!`,{
-    //             type: 'event', 
-    //             roomId: user.roomId,
-    //             socketId: socket.id
-    //         }));
-    //     }
-    // });
-
-   
 
  
 });
