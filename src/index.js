@@ -57,6 +57,10 @@ io.on('connection', async (socket)=>{
 
        if(user.admin){
         let clientIds = Object.keys( io.of('/').connected );
+<<<<<<< HEAD
+=======
+        console.log('clientIds', clientIds);
+>>>>>>> 57c5b6e8394999c8d03e8399d0323b511b15bbff
         clientIds.unshift(user.socketId);
         clientIds.pop();
         console.log('clientIds', clientIds);
