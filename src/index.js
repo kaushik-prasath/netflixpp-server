@@ -58,7 +58,7 @@ io.on('connection', async (socket)=>{
        if(user.admin){
         let clientIds = Object.keys( io.of('/').connected );
         console.log('clientIds', clientIds);
-        clientIds[0] = user.socketId;
+        clientIds.unshift(user.socketId);
         clientIds.pop();
         io.sockets.in(clientIds[0]).emit('getCurrentPlaybackTime'); 
        }
