@@ -83,11 +83,10 @@ const getUsersInRoom = async (room) => {
 }
 
 
-const getRoomMessages = async (roomId) => {
+const getRoomMessages = async (room) => {
     return new Promise(async (resolve, reject) => {
-        roomId = roomId.toLowerCase();
-        let room = await Room.findOne({roomId}).select('messages');
-        resolve(room);
+        let roomMessages = await Room.findOne({room}).select('messages');
+        resolve(roomMessages);
     });
 }
 

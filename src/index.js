@@ -16,7 +16,7 @@ const io = socketio(server, { path:"/", cookie: false });
 require('dotenv').config()
 const { mongoose } = require("./db/mongoose");
 
-const { generateMessage } = require('./utils/old');
+const { generateMessage } = require('./utils');
 const {addUser, removeUser,getUser, getUsersInRoom, getRoomMessages} = require('./utils/users');
 
 
@@ -57,9 +57,9 @@ io.on('connection', async (socket)=>{
 
        if(user.admin){
         let clientIds = Object.keys( io.of('/').connected );
-        console.log('clientIds', clientIds);
-        clientIds[0] = user.socketId;
+        clientIds.unshift(user.socketId);
         clientIds.pop();
+        console.log('clientIds', clientIds);
         io.sockets.in(clientIds[0]).emit('getCurrentPlaybackTime'); 
        }
         
@@ -74,7 +74,11 @@ io.on('connection', async (socket)=>{
 
             if(socket.id === clientIds[0]){
                 const user = await getUser(name);
-                io.emit('message', generateMessage(`${user.name}(Admin)`, `Jumped to ${currentPositionText}`));
+                io.emit('message', await generateMessage(`${user.name}(Admin)`, `Jumped to ${currentPositionText}`,{
+                    socketId: user.socketId,
+                    room: user.room,
+                    type: 'event'
+                }));
             }
             io.sockets.in(clientIds[0]).emit('getCurrentPlaybackTime');
     
@@ -85,11 +89,20 @@ io.on('connection', async (socket)=>{
     
        
 
-        socket.emit('message', generateMessage('', `Welcome ${name}!`));
+        socket.emit('message', await generateMessage('', `Welcome ${name}!`,{
+            socketId: user.socketId,
+            room: user.room,
+            type: 'event'
+        }));
 
         socket.on('sendMessage', async ({body, name}, callback) => {
+            console.log(body, name);
             const user = await getUser(name);
-            io.to(user.room).emit('message', generateMessage(user.name, body));
+            io.to(user.room).emit('message', await generateMessage(user.name, body, {
+                socketId: user.socketId,
+                room: user.room,
+                type: 'message'
+            }));
             callback();
         });
 
@@ -98,7 +111,11 @@ io.on('connection', async (socket)=>{
                 const user = await getUser(name);
     
                 socket.to(user.room).emit('paused');
-                io.to(user.room).emit('message', generateMessage(user.name, 'Paused the video'));
+                io.to(user.room).emit('message', await generateMessage(user.name, 'Paused the video', {
+                    socketId: user.socketId,
+                    room: user.room,
+                    type: 'event'
+                }));
         })
     
     
@@ -106,10 +123,18 @@ io.on('connection', async (socket)=>{
                 const user = await getUser(name);
                 socket.to(user.room).emit('played');
 
-                io.to(user.room).emit('message', generateMessage(user.name, 'Played the video'));
+                io.to(user.room).emit('message', await generateMessage(user.name, 'Played the video', {
+                    socketId: user.socketId,
+                    room: user.room,
+                    type: 'event'
+                }));
         })
 
-        socket.broadcast.to(user.room).emit('message', await generateMessage('', `${user.name} has joined!`));
+        socket.broadcast.to(user.room).emit('message', await generateMessage('', `${user.name} has joined!`, {
+            socketId: user.socketId,
+            room: user.room,
+            type: 'event'
+        }));
 
 
         socket.on('disconnect', async () => {
@@ -118,22 +143,26 @@ io.on('connection', async (socket)=>{
             socket.emit('user-disconnected');
     
             if(user){
-                io.to(user.room).emit('message', generateMessage('',`${user.name} has left!`));
+                io.to(user.room).emit('message', await generateMessage('',`${user.name} has left!`, {
+                    socketId: user.socketId,
+                    room: user.room,
+                    type: 'event'
+                }));
             }
         });
+
+
+       
     
 
         callback();
     });
 
-    
-
-    
-
-    // socket.on('getRoomMessages', async ({roomId}, callback) => {
-    //     const messages = await getRoomMessages(roomId);
-    //     callback(messages);
-    // });
+    socket.on('getRoomMessages', async ({room}, callback) => {
+        console.log('room', room);
+        const messages = await getRoomMessages(room);
+        callback(messages);
+    });
 
  
 });

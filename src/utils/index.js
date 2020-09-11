@@ -3,7 +3,7 @@ const Room = require('../models/room.model');
 
 const generateMessage = async (name,text, options) => {
     return new Promise(async (resolve, reject) =>{
-        const {type, roomId, socketId} = options;
+        const {type, room, socketId} = options;
 
         let message = {
             type,
@@ -16,7 +16,7 @@ const generateMessage = async (name,text, options) => {
             await User.findOneAndUpdate({name}, {$addToSet: {messages: message}});
         }
 
-        await Room.findOneAndUpdate({roomId}, {$addToSet: {messages: message}});
+        await Room.findOneAndUpdate({room}, {$addToSet: {messages: message}});
 
         resolve({
             name,
